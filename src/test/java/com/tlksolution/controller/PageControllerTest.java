@@ -17,16 +17,8 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
-
-import java.awt.print.Book;
-import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
-
 import static io.restassured.RestAssured.given;
-import static io.restassured.config.JsonConfig.jsonConfig;
-import static io.restassured.path.json.config.JsonPathConfig.NumberReturnType.BIG_DECIMAL;
 import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -57,14 +49,17 @@ public class PageControllerTest {
 
 
         Page b1 = new Page("test page 1");
+        b1.setContent("page  1");
         Page b2 = new Page("test page 2");
         Page b3 = new Page("test page 3");
         Page b4 = new Page("test page 4");
 
-        b1.addSubPage(b2);
-        b1.addSubPage(b3);
-
         pageRepository.saveAll(List.of(b1, b2, b3, b4));
+        b2.setParentPage(b1);
+        b3.setParentPage(b4);
+        pageRepository.save(b2);
+        pageRepository.save(b3);
+
     }
 
     @Test
@@ -77,7 +72,7 @@ public class PageControllerTest {
                 .then()
                 .statusCode(200)    // expecting HTTP 200 OK
                 .contentType(ContentType.JSON) // expecting JSON response content
-                .body(".", hasSize(4));
+                .body(".", hasSize(2));
     }
 
 
@@ -107,7 +102,7 @@ public class PageControllerTest {
                 .statusCode(201) // expecting HTTP 201 Created
                 .contentType(ContentType.JSON); // expecting JSON response content
 
-        // find the new saved book
+        // find the new saved page
         given()
                 .pathParam("id", responseId)
                 .when()
@@ -130,25 +125,23 @@ public class PageControllerTest {
         Page page4 = pageRepository.findAll().get(3);
         Long pageId = page4.getId();
 
-        page4.setTitle("updated title");
-        page4.setParentPage(page1);
         given()
+                .pathParam("id", pageId)
                 .contentType(ContentType.JSON)
-                .body(page4)
+                .body(String.format("{ \"title\": \"updated title\", \"parentPageid\": \"%d\"}", page1.getId()))
                 .when()
-                .put("/api/pages")
+                .put("/api/pages/{id}")
                 .then()
                 .statusCode(200)
                 .contentType(ContentType.JSON);
 
-        // get the updated book
+        // get the updated page
         Page page = pageRepository.findById(pageId).orElseThrow();
         System.out.println(page);
 
         assertEquals(pageId, page.getId());
         assertEquals("updated title", page.getTitle());
-//        assertTrue(page.getParentPage().equals(page1));
-        assertTrue(page1.getSubPage().contains(page));
+        assertTrue(page.getParentPage().equals(page1));
     }
 
 }

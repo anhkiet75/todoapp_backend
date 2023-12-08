@@ -1,5 +1,7 @@
 package com.tlksolution.controller;
 
+import com.github.fge.jsonpatch.JsonPatch;
+import com.tlksolution.dto.request.PageRequestDto;
 import com.tlksolution.model.Page;
 import com.tlksolution.service.PageService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -7,9 +9,11 @@ import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.HttpStatus;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @RestController
+@CrossOrigin
 @RequestMapping("/pages")
 public class PageController {
     @Autowired
@@ -28,14 +32,14 @@ public class PageController {
     // create a page
     @ResponseStatus(HttpStatus.CREATED)
     @PostMapping
-    public Page create(@RequestBody Page page) {
+    public Page create(@RequestBody PageRequestDto page) {
         return pageService.save(page);
     }
 
     // update a page
-    @PutMapping
-    public Page update(@RequestBody Page page) {
-        return pageService.save(page);
+    @PatchMapping("/{id}")
+    public Page update(@PathVariable Long id, @RequestBody Map<String,String> fields) {
+        return pageService.update(id, fields);
     }
 
     // delete a page

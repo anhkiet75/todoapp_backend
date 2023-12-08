@@ -36,9 +36,16 @@ public class Application {
 			Page b2 = new Page("test page 2");
 			Page b3 = new Page("test page 3");
 			Page b4 = new Page("test page 4");
-
+            b1.setIcon("😍");
 			pageRepository.saveAll(List.of(b1, b2, b3, b4));
-
+			b2.setParentPage(b1);
+            b2.setIcon("😮");
+			pageRepository.save(b2);
+			b3.setParentPage(b2);
+            b3.setIcon("👌");
+			pageRepository.save(b3);
+            b4.setIcon("😁");
+            pageRepository.save(b4);
 		};
 	}
 }
